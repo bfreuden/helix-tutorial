@@ -490,7 +490,7 @@ As stated in the architecture documentation, a participant is a JVM that actuall
 In other words that JVM is your application's (since Helix doesn't know if you're implementing a distributed database or something).
 
 In real life you will have to embed a participant in your JVM, and let your application react to
-orders like this (order that are given to your application through callbacks set on the participant):
+orders like this (orders that are given to your application through callbacks set on the participant):
 * serve myDB_0 partition as a master
 * serve myDB_1 partition as a slave
 * drop myDB_3 partition (because it has been reassigned to another node)
