@@ -206,6 +206,21 @@ localhost_12915
 ```
 Note that ```localhost_12913``` is the **instance identifier** of the node.
 
+This can be done programmatically:
+```java
+ZKHelixAdmin admin = new ZKHelixAdmin(ZK_ADDRESS);
+String ports[] = new String[] {"12913", "12914", "12915"};
+for (String port: ports) {
+    String instanceId = "localhost_" + port;
+    InstanceConfig instanceConfig = new InstanceConfig(instanceId);
+    instanceConfig.setHostName("localhost");
+    instanceConfig.setPort(port);
+    instanceConfig.setInstanceEnabled(true);
+    admin.addInstance("MYCLUSTER", instanceConfig);
+}
+admin.close();
+```
+
 ## Declaring a resource in the cluster
 
 ### Preamble
@@ -914,7 +929,7 @@ Of course, you can restart the participant once again and the controller will de
 
 At first sight it looks like the controller is a single point of failure but it is not the case.
 
-The controller documentations (https://helix.apache.org/0.9.8-docs/tutorial_controller.html) states that you can start many controllers.
+The controller documentation (https://helix.apache.org/0.9.8-docs/tutorial_controller.html) states that you can start many controllers.
 Only one will be active at a time through a leader election process.
 You can even embed a controller in your participant JVMs.
 
