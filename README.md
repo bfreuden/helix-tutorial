@@ -29,7 +29,7 @@ Official documentation: https://helix.apache.org/
     + [Effect on the external view](#effect-on-the-external-view)
   * [Participants](#participants)
     + [Starting a participant](#starting-a-participant)
-    + [Effect of the external view](#effect-of-the-external-view)
+    + [Effect on the external view](#effect-on-the-external-view)
     + [Starting all participants](#starting-all-participants)
 - [Failover](#failover)
   * [Setup a watch on the external view](#setup-a-watch-on-the-external-view)
@@ -131,7 +131,7 @@ Creating the cluster using the command line:
 ```bash
 ./helix-admin.sh --zkSvr localhost:2181 --addCluster MYCLUSTER
 ```
-This command will only create a ``MYCLUSTER`` root znode in Zookeper with a Helix-specific layout of znodes.
+This command will only create a ``MYCLUSTER`` root znode in Zookeeper with a Helix-specific layout of znodes.
 
 Let's have a look at the result using zkCli:
 ```
@@ -204,7 +204,7 @@ localhost_12913
 localhost_12914
 localhost_12915
 ```
-Note that ```localhost_12913``` is the **instance identifier** if the node.
+Note that ```localhost_12913``` is the **instance identifier** of the node.
 
 ## Declaring a resource in the cluster
 
@@ -224,7 +224,7 @@ We can see ``MasterSlave``, ``LeaderStandby`` and ``OnlineOffline`` for instance
 But you can define your own state model: https://helix.apache.org/0.9.8-docs/tutorial_state.html.
 
 At this point you are probably guessing that Helix will decide the placement of the shards (and their states: master or slave).
-You would be right: Helix can do that for you but that behavior, called **rebalance mode**, is actually customizable.
+You would be right: Helix can do that for you... but that behavior, called **rebalance mode**, is actually customizable.
 
 For more information, see: 
 
@@ -347,12 +347,12 @@ This is expressed using the following notation:
   "LOCATION" : "STATE"
 }
 ```
-In the output below, we will see partitions named (index suffix) after the resource (e.g. ``myDB_0``), 
+In the output below, we will see partitions named after the resource (with a numeral suffix, e.g. ``myDB_0``), 
 instance identifiers of nodes (e.g. ``localhost_12913``) and states (e.g. ``SLAVE``).
 We will also see that, in this ideal state, we have:
 * 2 master partitions per node
 * 2 slave partitions per node
-* no node with 2 replicas of the same partition (since it does not make sense for a node to be a master and a slave for a partition)
+* no node with 2 replicas of the same partition (it does not make sense for a node to be a master and a slave for a given partition)
 ```
 IdealState for myDB:
 {
@@ -420,9 +420,9 @@ The next step is to throw some JVMs into play... they will interact with the met
 
 The architecture documentation (https://helix.apache.org/Architecture.html) states that Helix will divide those
 JVMs based on their responsibilities:
-* Participant: The JVMs that actually host the distributed resources
-* Spectator: The JVMs that simply observe the current state of each Participant (Routers, for example, need to know the instance on which a partition is hosted and its state in order to route the request to the appropriate endpoint)
-* Controller: The JVMs that observes and controls the Participant nodes. It is responsible for coordinating all transitions in the cluster and ensuring that state constraints are satisfied while maintaining cluster stability.
+* Participants: JVMs that actually host the distributed resources
+* Spectators: JVMs that simply observe the current state of each Participant (Routers, for example, need to know the instance on which a partition is hosted and its state in order to route the request to the appropriate endpoint)
+* Controllers: JVMs that observes and controls the Participant nodes. It is responsible for coordinating all transitions in the cluster and ensuring that state constraints are satisfied while maintaining cluster stability.
 
 ## Controller
 
@@ -486,16 +486,16 @@ So let's start a participant.
 
 This is where you (a developer planning to use Helix) come into play. 
 
-As stated in the architecture documentation, a participant is a JVM that actually host the distributed resources.
+As stated in the architecture documentation, a participant is a JVM that actually hosts the distributed resources.
 In other words that JVM is your application's (since Helix doesn't know if you're implementing a distributed database or something).
 
 In real life you will have to embed a participant your JVM, and let your application react to
-orders given by the participant through callbacks:
+orders like this (order that are given to your application through callbacks set on the participant):
 * serve myDB_0 partition as a master
 * serve myDB_1 partition as a slave
 * drop myDB_3 partition (because it has been reassigned to another node)
 
-Helix is delivered with a mock participant though. It's very nice to see how Helix is working.
+Helix is delivered with a mock participant though. It's very nice to see how Helix is working before writing code.
 
 ### Starting a participant
 
@@ -505,13 +505,15 @@ Please note that the host and port must match one of the nodes we previously add
 ```bash
 ./start-helix-participant.sh --zkSvr localhost:2181 --cluster MYCLUSTER --host localhost --port 12913 --stateModelType MasterSlave
 ```
+It is unclear to me why the state model must be defined when starting the participant.
+
 We can see that a participant will add a live instance znode into Zookeeper (zkCli):
 ```
 [zk: localhost:2181(CONNECTED) 21] ls /MYCLUSTER/LIVEINSTANCES
 [localhost_12913]
 ```
 
-### Effect of the external view
+### Effect on the external view
 
 We can also see that the Helix controller has assigned all partitions (in the ``MASTER`` state) to the ``localhost_12913`` instance:
 ```bash
@@ -645,6 +647,8 @@ Once again the Helix controller has:
 * evenly dispatched ``MASTER`` replicas on 3 instances
 * taken into consideration the expected replication factor: now we have 2 ``SLAVE`` replicas for each partition
 
+Now the external view is the same as the ideal state.
+
 Now let's observe how Helix will handle failures.
 
 # Failover
@@ -659,7 +663,7 @@ watch -n1 "sh -c './helix-admin.sh --zkSvr localhost:2181 --listResourceInfo MYC
 
 ## Gently terminating a participant
 
-And let's terminate the last participant:
+Let's terminate the last participant:
 ```bash
 kill "$(ps -ef | grep java | grep 12915 | awk -F ' ' '{print $2}')"
 ```
@@ -703,7 +707,8 @@ Now start your participant once again:
 ```bash
 ./start-helix-participant.sh --zkSvr localhost:2181 --cluster MYCLUSTER --host localhost --port 12915 --stateModelType MasterSlave
 ```
-The watch will show you that the Helix controller will almost instantly update the external view to get back to the previous state:
+The watch will show you that the Helix controller will almost instantly update the external view 
+to get back to the previous (and ideal) state:
 ```
 ExternalView for myDB:
 {
@@ -813,7 +818,7 @@ Now let's terminate the Helix controller:
 bash
 kill "$(ps -ef | grep java | grep HelixControllerMain | awk -F ' ' '{print $2}')"
 ```
-Then nothing wrong will happen (as long as nothing wrong happens to your participants).
+You can do that. Nothing wrong will happen (as long as nothing wrong happens to your participants in the meantime).
 In fact the external view is still OK:
 ```
 ExternalView for myDB:
@@ -856,7 +861,7 @@ ExternalView for myDB:
   "simpleFields" : {
 ```
 
-Now let's terminate the last participant (once again, poor guy):
+Now let's terminate the last participant (once again... poor guy...):
 ```bash
 kill "$(ps -ef | grep java | grep 12915 | awk -F ' ' '{print $2}')"
 ```
@@ -902,7 +907,7 @@ ExternalView for myDB:
   },
   "simpleFields" : {
 ```
-Of course, you can restart the participant once again and the controller will detect it then dispatch partitions.
+Of course, you can restart the participant once again and the controller will detect it then get back to the ideal state.
 
 ## No single point of failure
 
