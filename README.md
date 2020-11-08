@@ -185,7 +185,7 @@ Adding nodes to the cluster using the command line:
 When you start reading Helix docs, this notion of ``hostname:port`` is somehow confusing.
 You start wondering about a server you'll have to run on those ports in your Helix-powered application. 
 Actually it is not required to have any server running on those ports.
-So for the moment just consider that those are identifier. 
+So for the moment just consider that those are identifiers. 
 
 Instances have appeared in Zookeeper (zkCli):
 ```
@@ -489,7 +489,7 @@ This is where you (a developer planning to use Helix) come into play.
 As stated in the architecture documentation, a participant is a JVM that actually hosts the distributed resources.
 In other words that JVM is your application's (since Helix doesn't know if you're implementing a distributed database or something).
 
-In real life you will have to embed a participant your JVM, and let your application react to
+In real life you will have to embed a participant in your JVM, and let your application react to
 orders like this (order that are given to your application through callbacks set on the participant):
 * serve myDB_0 partition as a master
 * serve myDB_1 partition as a slave
@@ -591,12 +591,13 @@ ExternalView for myDB:
   "listFields" : {
   },
   "simpleFields" : {
-
 ```
 
 We can see that the Helix controller has done 2 things:
-* evenly dispatched ``MASTER`` partitions on our 2 instances
+* started dispatching ``MASTER`` partitions on our 2 instances
 * created ``SLAVE`` replicas on both instances (making sure a ``SLAVE`` is on a different instance as the ``MASTER``).
+
+I don't know why master partitions are not evenly distributed on nodes: maybe to minimize future partition movement?
 
 Let's start the third participant:
 ```bash
