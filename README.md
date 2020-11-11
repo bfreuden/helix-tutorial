@@ -453,14 +453,6 @@ HelixManager manager = HelixManagerFactory.getZKHelixManager(
     "MYCLUSTER", "mycontroller", InstanceType.CONTROLLER, "localhost:2181"
 );
 manager.connect();
-GenericHelixController controller = new GenericHelixController();
-manager.addInstanceConfigChangeListener(controller);
-manager.addInstanceConfigChangeListener(controller);
-manager.addLiveInstanceChangeListener(controller);
-manager.addIdealStateChangeListener(controller);
-// this one is stated in the doc but does not compile (to be checked)
-// manager.addExternalViewChangeListener(controller);
-manager.addControllerListener(controller);
 ```
 
 ### Effect on the external view
